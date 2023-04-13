@@ -4,15 +4,14 @@ using UnityEngine;
 
 public class TileMeshType
 {
-    public static float tileThickness = 5;
     private static Vector3 offsetVec = new Vector3(0.5f, 0.5f, 0);
 
 
-    #region Presets
+#region Presets
 
     private static TileMeshType squarePreset = new TileMeshType(new Vector3[] 
     { 
-        Vector3.zero, Vector3.up, Vector3.right, Vector3.right + Vector3.up 
+        Vector3.zero, Vector3.up, Vector3.right, new Vector3(1, 1, 0)
     }, 
         new int[] 
         { 
@@ -20,16 +19,16 @@ public class TileMeshType
             3, 2, 1 
         }, new Vector2[] { });
     
-    private static TileMeshType polygonPeset = new TileMeshType(new Vector3[] 
+    private static TileMeshType slopePeset = new TileMeshType(new Vector3[] 
     { 
         Vector3.zero, Vector3.up, Vector3.right, //front face
-        Vector3.zero, Vector3.up, Vector3.right, Vector3.right + Vector3.forward * tileThickness, Vector3.up + Vector3.forward * tileThickness //slope
+        Vector3.zero, Vector3.up, Vector3.right, new Vector3(1, 0, ChunkInfo.thickness), new Vector3(0, 1, ChunkInfo.thickness) //wall
     }, 
         new int[] 
         { 
             0, 1, 2, //front face
-            5, 7, 6, //slope
-            4, 7, 5  //slope
+            5, 7, 6, //wall
+            4, 7, 5  //wall
         }, new Vector2[] { });
 
     private static TileMeshType emptyPreset = new TileMeshType(new Vector3[] { }, new int[] { }, new Vector2[] { });
@@ -37,26 +36,26 @@ public class TileMeshType
     private static TileMeshType spikePeset = new TileMeshType(new Vector3[] 
     { 
         Vector3.zero, new Vector3(0.5f, 0.5f, 0), Vector3.right, //front face
-        Vector3.zero, new Vector3(0.5f, 0.5f, 0), Vector3.forward * tileThickness, new Vector3(0.5f, 0.5f, tileThickness), //left slope
-        new Vector3(0.5f, 0.5f, 0), Vector3.right, new Vector3(0.5f, 0.5f, tileThickness), Vector3.right + Vector3.forward * tileThickness //right slope
+        Vector3.zero, new Vector3(0.5f, 0.5f, 0), new Vector3(0, 0, ChunkInfo.thickness), new Vector3(0.5f, 0.5f, ChunkInfo.thickness), //left wall
+        new Vector3(0.5f, 0.5f, 0), Vector3.right, new Vector3(0.5f, 0.5f, ChunkInfo.thickness), new Vector3(1, 0, ChunkInfo.thickness)  //right wall
     }, 
         new int[] 
         { 
             0, 1, 2, //front face
-            3, 5, 4, //left slope
-            5, 6, 4, //left slope
-            7, 9, 8, //right slope
-            9, 10, 8  //right slope
+            3, 5, 4, //left wall
+            5, 6, 4, //left wall
+            7, 9, 8, //right wall
+            9, 10, 8  //right wall
         }, new Vector2[] { });
 
 
 
     public static TileMeshType square() { return Clone(squarePreset); }
-    public static TileMeshType polygon() { return Clone(polygonPeset); }
+    public static TileMeshType slope() { return Clone(slopePeset); }
     public static TileMeshType empty() { return Clone(emptyPreset); }
     public static TileMeshType spike() { return Clone(spikePeset); }
 
-    #endregion
+#endregion
 
     public Vector3[] vertices;
     public int[] triangles;
@@ -89,7 +88,7 @@ public class TileMeshType
         List<int> trisList = new List<int>();
         trisList.AddRange(triangles);
 
-        Vector3[] vertsTmp = new Vector3[] { Vector3.up, new Vector3(1, 1, 0), new Vector3(0, 1, tileThickness), new Vector3(1, 1, tileThickness) };
+        Vector3[] vertsTmp = new Vector3[] { Vector3.up, new Vector3(1, 1, 0), new Vector3(0, 1, ChunkInfo.thickness), new Vector3(1, 1, ChunkInfo.thickness) };
         int[] trisTmp = new int[] 
         { 
             vertIndex + 0, 

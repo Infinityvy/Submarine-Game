@@ -19,7 +19,7 @@ public class WorldGenerator : MonoBehaviour
     public Vector2 offset = Vector2.zero;
 
 
-    private Vector2 noiseDefaultOffset = new Vector2(WorldLoader.renderDistance * ChunkInfo.size, WorldLoader.renderDistance * ChunkInfo.size);
+    //private Vector2 noiseDefaultOffset = new Vector2(WorldLoader.renderDistance * ChunkInfo.size, WorldLoader.renderDistance * ChunkInfo.size);
 
     private void Awake()
     {
@@ -50,18 +50,10 @@ public class WorldGenerator : MonoBehaviour
         return chunk;
     }
 
-    public void drawChunks()
-    {
-        foreach (Chunk ch in WorldLoader.active.loadedChunksList)
-        {
-            ch.init();
-        }
-    }
-
     private bool isTile(Vector2Int tilePos)
     {
 
-        Vector2 tilePos01 = ((Vector2)tilePos) * noiseScale / WorldLoader.renderDistance / ChunkInfo.size + offset;
+        Vector2 tilePos01 = ((Vector2)tilePos) * noiseScale / WorldLoader.generationDistance / ChunkInfo.size + offset;
 
 
 

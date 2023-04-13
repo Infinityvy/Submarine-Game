@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Sub_Controller : MonoBehaviour
 {
-    private Rigidbody2D rigidBody;
+    private Rigidbody rigidBody;
 
 
     private float speed = 10;
@@ -14,21 +14,20 @@ public class Sub_Controller : MonoBehaviour
 
     private float diagonalPerAxisSpeed; //calculated using speed
 
-    private float angularSpeed = 20;
-    private float angularAcceleration = 15;
-    private float angularDeceleration = 25;
-    private float minAngularSpeed = 0.1f;
-
+    private float angularSpeed = 1;
     private float angleErrorMargin = 0.1f;
 
     void Start()
     {
-        rigidBody = GetComponent<Rigidbody2D>();
+        rigidBody = GetComponent<Rigidbody>();
 
         diagonalPerAxisSpeed = Mathf.Sqrt(speed * speed * 0.5f);
     }
 
-    private void movement()
+    /// <summary>
+    /// Moves the submarine using the controls from Keybinds class.
+    /// </summary>
+    private void move()
     {
         //fetch axis values for later use
         int axisUpDownValue = axisUpDown();
@@ -40,81 +39,119 @@ public class Sub_Controller : MonoBehaviour
         {
             Vector2 forceVector = Vector2.zero;
 
-            if (axisUpDownValue != 0) //calculate up/down-axis force
+            if (axisUpDownValue != 0)       //calculate up/down-axis force
             {
                 forceVector += acceleration * axisUpDownValue * Vector2.up;
             }
 
-            if (axisLeftRightValue != 0) //calculate left/right-axis force
+            if (axisLeftRightValue != 0)    //calculate left/right-axis force
             {
                 forceVector += acceleration * axisLeftRightValue * Vector2.right;
             }
 
-            if (rigidBody.velocity.magnitude < speed) rigidBody.AddForce(forceVector, ForceMode2D.Impulse); //apply force as long as max speed isnt reached
+            if (rigidBody.velocity.magnitude < speed) rigidBody.AddForce(forceVector, ForceMode.Impulse); //apply force as long as max speed isnt reached
         }
         
         if (rigidBody.velocity.magnitude != 0) //check if sub is moving and can be decelerated
         {
-            if ((axisLeftRightValue == 0 && rigidBody.velocity.x != 0) || Mathf.Abs(rigidBody.velocity.x) > axisSpeedCap) //decelerate x velocity if applicable
+            if ((axisLeftRightValue == 0 && rigidBody.velocity.x != 0) || Mathf.Abs(rigidBody.velocity.x) > axisSpeedCap)   //decelerate x velocity if applicable
             {
-                rigidBody.AddForce(-deceleration * rigidBody.velocity.x * Vector2.right, ForceMode2D.Impulse);
+                rigidBody.AddForce(-deceleration * rigidBody.velocity.x * Vector2.right, ForceMode.Impulse);
 
-                if (Mathf.Abs(rigidBody.velocity.x) < minSpeed) rigidBody.velocity = new Vector2(0, rigidBody.velocity.y); //set x velocity to 0 if it is below minSpeed
+                if (Mathf.Abs(rigidBody.velocity.x) < minSpeed) rigidBody.velocity = new Vector2(0, rigidBody.velocity.y);  //set x velocity to 0 if it is below minSpeed
             }
 
-            if ((axisUpDownValue == 0 && rigidBody.velocity.y != 0) || Mathf.Abs(rigidBody.velocity.y) > axisSpeedCap) //decelerate y velocity if applicable
+            if ((axisUpDownValue == 0 && rigidBody.velocity.y != 0) || Mathf.Abs(rigidBody.velocity.y) > axisSpeedCap)      //decelerate y velocity if applicable
             {
-                rigidBody.AddForce(-deceleration * rigidBody.velocity.y * Vector2.up, ForceMode2D.Impulse);
+                rigidBody.AddForce(-deceleration * rigidBody.velocity.y * Vector2.up, ForceMode.Impulse);
 
-                if (Mathf.Abs(rigidBody.velocity.y) < minSpeed) rigidBody.velocity = new Vector2(rigidBody.velocity.x, 0); //set y velocity to 0 if it is below minSpeed
+                if (Mathf.Abs(rigidBody.velocity.y) < minSpeed) rigidBody.velocity = new Vector2(rigidBody.velocity.x, 0);  //set y velocity to 0 if it is below minSpeed
             }
         }
     }
 
     private int axisUpDown()
     {
-        if (Input.GetKey(Keybinds.moveUp)) return 1;
-        else if (Input.GetKey(Keybinds.moveDown)) return -1;
+        if (Input.GetKey(Keybinds.MoveUp)) return 1;
+        else if (Input.GetKey(Keybinds.MoveDown)) return -1;
         else return 0;
     }
 
     private int axisLeftRight()
     {
-        if (Input.GetKey(Keybinds.moveRight)) return 1;
-        else if (Input.GetKey(Keybinds.moveLeft)) return -1;
+        if (Input.GetKey(Keybinds.MoveRight)) return 1;
+        else if (Input.GetKey(Keybinds.MoveLeft)) return -1;
         else return 0;
     }
 
-    private void rotation()
+    /// <summary>
+    /// Rotates the submarine towards the cursor.
+    /// </summary>
+    private void rotate()
     {
-        Vector2 viewDir = transform.rotation * Vector2.right;
-        Vector2 rotationAlignmentDir = calcRotationAlignmentDir();
-
-        float angle = Vector2.SignedAngle(viewDir, rotationAlignmentDir);
-        float absAngle = Mathf.Abs(angle);
-
-        if(absAngle > angleErrorMargin && Mathf.Abs(rigidBody.angularVelocity) < angularSpeed * Mathf.Clamp(absAngle * 0.05f, 0.8f, 2))
+        if (!Input.GetKey(Keybinds.Aim))
         {
-            int sign = angle < 0 ? -1 : 1;
-            rigidBody.AddTorque(sign * angularAcceleration, ForceMode2D.Impulse);
+            if (rigidBody.angularVelocity.z != 0) rigidBody.angularVelocity = Vector3.zero;
+            return;
         }
-        else if(rigidBody.angularVelocity != 0)
-        {
-            int sign = rigidBody.angularVelocity < 0 ? 1 : -1; //gets the opposite sign of angularVelocity
-            rigidBody.AddTorque(sign * angularDeceleration, ForceMode2D.Impulse);
 
-            if (Mathf.Abs(rigidBody.angularVelocity) < minAngularSpeed) rigidBody.angularVelocity = 0;
+        Vector2 viewDir = transform.rotation * Vector2.right;                   //get current view direction vector
+        Vector2 rotationAlignmentDirection = calcRotationAlignmentDirection();  //get the direction vector to rotate towards
+
+        float angle = Vector2.SignedAngle(viewDir, rotationAlignmentDirection); //get the signed angle between the view direction and alignment direction
+        float absAngle = Mathf.Abs(angle);                                      //get the absolute angle
+        int sign = angle < 0 ? -1 : 1;                                          //get the sign of the signed angle
+
+
+        //accelerate towards alignment direction if not aligned, otherwise decelerate to stop rotation
+        if(absAngle > angleErrorMargin)
+        {
+            rigidBody.angularVelocity = Vector3.forward * sign * angularSpeed * Mathf.Lerp(1, 0.1f, 1 / absAngle);
         }
+        else if(rigidBody.angularVelocity.z != 0)
+        {
+            rigidBody.angularVelocity = Vector3.zero;
+        }
+
     }
 
-    private Vector2 calcRotationAlignmentDir() 
+    /// <summary>
+    /// Calculate the rotation alignment direction using the cursor.
+    /// </summary>
+    /// <returns></returns>
+    private Vector2 calcRotationAlignmentDirection()
     {
         return (Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.z)) - transform.position).normalized;
     }
 
+    private float calculateDecelerationDistance()
+    {
+        // Check if the game object is moving
+        if (rigidBody.velocity != Vector3.zero)
+        {
+            // Calculate the time required to decelerate the game object to zero velocity
+            float decelerationTime = rigidBody.velocity.magnitude / deceleration;
+
+            // Calculate the distance required to decelerate the game object to zero velocity
+            float decelerationDistance = (rigidBody.velocity.magnitude * decelerationTime) / 2f;
+
+            return decelerationDistance;
+        }
+
+        return 0;
+    }
+
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.J)) 
+        {
+            Debug.Log(calculateDecelerationDistance());
+        }
+    }
+
     void FixedUpdate()
     {
-        movement();
-        rotation();
+        move();
+        rotate();
     }
 }

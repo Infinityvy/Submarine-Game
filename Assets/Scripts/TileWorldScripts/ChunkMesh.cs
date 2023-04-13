@@ -6,6 +6,7 @@ public class ChunkMesh : MonoBehaviour
 {
     private Chunk chunk;
     private MeshFilter meshFilter;
+    private MeshCollider meshCollider;
     private Mesh mesh;
 
     private List<Vector3> vertices;
@@ -33,9 +34,12 @@ public class ChunkMesh : MonoBehaviour
 
         this.chunk = chunk;
         meshFilter = GetComponent<MeshFilter>();
+        meshCollider= GetComponent<MeshCollider>();
         mesh = new Mesh();
 
         generateMesh();
+
+        meshCollider.sharedMesh = mesh;
     }
 
     public void fini()
@@ -60,7 +64,7 @@ public class ChunkMesh : MonoBehaviour
             }
             else if (loadedChunkList[i].position.y == chunk.position.y)
             {
-                if(Mathf.Abs(loadedChunkList[i].position.y - chunk.position.y) == 1)
+                if(Mathf.Abs(loadedChunkList[i].position.x - chunk.position.x) == 1)
                 {
                     if (loadedChunkList[i].position.x > chunk.position.x) neighbouringChunks[1] = loadedChunkList[i];
                     else neighbouringChunks[3] = loadedChunkList[i];
@@ -94,9 +98,36 @@ public class ChunkMesh : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
 
+
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            switch(i % 4)  
+            {
+                case 0:
+                    uvs.Add(new Vector2(0, 0));
+                    break;
+                case 1:
+                    uvs.Add(new Vector2(1, 0));
+                    break;
+                case 2:
+                    uvs.Add(new Vector2(0, 1));
+                    break;
+                case 3:
+                    uvs.Add(new Vector2(1, 1));
+                    break;
+            }
+        }
+
+        mesh.uv = uvs.ToArray();
+
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
         
+
+        //for (int i = 0;i < vertices.Count / 4; i++)
+        //{
+
+        //}
 
         meshFilter.mesh = mesh;
     }
@@ -161,7 +192,7 @@ public class ChunkMesh : MonoBehaviour
         }
         else if ((upEmpty || downEmpty) && (rightEmpty || leftEmpty)) //from this point on truthCount must be 2
         {
-            meshType = TileMeshType.polygon(); //half quad polygon
+            meshType = TileMeshType.slope(); //half quad polygon
             polygonVariant = 1;
         }
         else if(upEmpty && downEmpty) //square tile with no block above & below; we can return after this since no further operations required
